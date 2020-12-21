@@ -1,0 +1,66 @@
+{{- $_ := set . "Version" ( splitList "/" (env "GITHUB_REF" ) | last ) }}
+{{- $_ := set . "BaseURL" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "." "-dot-"  ) }}
+
+configVersion: 1
+project: werfio-ng
+---
+artifact: asset-{{ .BaseURL }}
+from: jekyll/builder:4
+ansible:
+  install:
+  - shell: |
+      export PATH=/usr/jekyll/bin/:$PATH
+  - name: "Install Dependencies"
+    shell: bundle install
+    args:
+      executable: /bin/bash
+      chdir: /app/docs
+  beforeSetup:
+  - file:
+      path: "{{`{{ item }}`}}"
+      state: directory
+      mode: 0777
+    with_items:
+    - /app/_site/main/
+    - /app/_site/ru/
+  - shell: |
+      echo "timezone: Europe/Moscow\n" > /tmp/_config_additional.yml
+      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/main/{{ .BaseURL }} --baseurl /{{ .BaseURL }} --config /app/docs/_config.yml,/tmp/_config_additional.yml
+      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/ru/{{ .BaseURL }} --baseurl /{{ .BaseURL }} --config /app/docs/_config.yml,/app/docs/_config_ru.yml,/tmp/_config_additional.yml
+    args:
+      executable: /bin/bash
+      chdir: /app/docs
+git:
+- add: /docs
+  to: /app/docs
+  owner: jekyll
+  group: jekyll
+  excludePaths: '**/*.sh'
+  stageDependencies:
+    install: ['Gemfile','Gemfile.lock']
+    beforeSetup: '**/*'
+---
+image: site-{{ .BaseURL }}
+from: nginx:stable-alpine
+ansible:
+  setup:
+  - name: "Setup /etc/nginx/nginx.conf"
+    copy:
+      content: |
+{{ .Files.Get ".werf/nginx.conf" | indent 8 }}
+      dest: /etc/nginx/nginx.conf
+{{- if eq .Version "master" }}
+  - copy:
+      content: |
+{{ .Files.Get ".werf/robots.txt" | indent 8 }}
+      dest: /app/main/robots.txt
+  - copy:
+      content: |
+{{ .Files.Get ".werf/robots_ru.txt" | indent 8 }}
+      dest: /app/ru/robots.txt
+{{- end }}
+import:
+- artifact: asset-{{ .BaseURL }}
+  add: /app/_site
+  to: /app/
+  before: setup
