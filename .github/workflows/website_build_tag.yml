@@ -20,7 +20,7 @@ jobs:
       with:
         env: test
       env:
-        WERF_CONFIG: "docs/werf.yaml"
+        WERF_DIR: "docs"
         WERF_LOG_VERBOSE: "on"
         WERF_KUBE_CONTEXT: dev
         WERF_SET_CI_URL: "global.ci_url=werfng.test.flant.com"
@@ -31,7 +31,7 @@ jobs:
         env: production
       env:
         # to fix on prod
-        WERF_CONFIG: "docs/werf.yaml"
+        WERF_DIR: "docs"
         WERF_LOG_VERBOSE: "on"
         WERF_KUBE_CONTEXT: prod
         WERF_SET_CI_URL: "global.ci_url=ng.werf.io"
