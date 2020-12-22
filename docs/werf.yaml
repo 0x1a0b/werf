@@ -31,8 +31,8 @@ ansible:
     - /app/_site/ru/
   - shell: |
       echo "timezone: Europe/Moscow\n" > /tmp/_config_additional.yml
-      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/main/{{ if ne .Version "master"}}{{.BaseURL }} --baseurl /{{ .BaseURL }}{{ end }} --config /app/docs/_config.yml,/tmp/_config_additional.yml
-      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/ru/{{ if ne .Version "master"}}{{.BaseURL }} --baseurl /{{ .BaseURL }}{{ end }} --config /app/docs/_config.yml,/app/docs/_config_ru.yml,/tmp/_config_additional.yml
+      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/main/{{ if ne .Version "master"}}{{.Version }} --baseurl /{{ .Version }}{{ end }} --config /app/docs/_config.yml,/tmp/_config_additional.yml
+      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/ru/{{ if ne .Version "master"}}{{.Version }} --baseurl /{{ .Version }}{{ end }} --config /app/docs/_config.yml,/app/docs/_config_ru.yml,/tmp/_config_additional.yml
     args:
       executable: /bin/bash
       chdir: /app/docs
