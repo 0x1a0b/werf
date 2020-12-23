@@ -2,13 +2,13 @@
 
 {{- if eq .Version "wf-werfio-2-0" }}{{ $_ := set . "Version" "master" }}{{- end  }}
 
-{{- $_ := set . "BaseURL" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "." "-dot-"  ) }}
+{{- $_ := set . "VersionNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" ) }}
 {{- $host := .Values.global.ci_url }}
 
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  name: {{ .Chart.Name }}-{{ .BaseURL }}
+  name: {{ .Chart.Name }}-{{ .VersionNormalized }}
   annotations:
     kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/configuration-snippet: |
@@ -39,7 +39,7 @@ spec:
       - path: /{{ .Version }}
 {{- end }}
         backend:
-          serviceName: {{ .Chart.Name }}-{{ .BaseURL }}
+          serviceName: {{ .Chart.Name }}-{{ .VersionNormalized }}
           servicePort: http
   - host: ru.{{ $host }}
     http:
@@ -50,7 +50,7 @@ spec:
       - path: /{{ .Version }}
 {{- end }}
         backend:
-          serviceName: {{ .Chart.Name }}-{{ .BaseURL }}
+          serviceName: {{ .Chart.Name }}-{{ .VersionNormalized }}
           servicePort: 80
 ---
 {{- if eq .Version "master" }}

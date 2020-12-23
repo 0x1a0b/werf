@@ -2,15 +2,16 @@
 
 {{- if eq .Version "wf-werfio-2-0" }}{{ $_ := set . "Version" "master" }}{{- end  }}
 
-{{- $_ := set . "BaseURL" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "." "-dot-"  ) }}
+{{- $_ := set . "VersionNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" ) }}
 
 project: werfio-ng
 configVersion: 1
 deploy:
   helmChartDir: docs/.helm
+  helmRelease: [[ project ]]-{{ .VersionNormalized }}-[[ env ]]
 
 ---
-artifact: asset-{{ .BaseURL }}
+artifact: asset-{{ .VersionNormalized }}
 from: jekyll/builder:3
 ansible:
   install:
@@ -30,9 +31,9 @@ ansible:
     - /app/_site/main/
     - /app/_site/ru/
   - shell: |
-      echo "timezone: Europe/Moscow\n" > /tmp/_config_additional.yml
-      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/main/{{ if ne .Version "master"}}{{.Version }} --baseurl /{{ .Version }}{{ end }} --config /app/docs/_config.yml,/tmp/_config_additional.yml
-      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/ru/{{ if ne .Version "master"}}{{.Version }} --baseurl /{{ .Version }}{{ end }} --config /app/docs/_config.yml,/app/docs/_config_ru.yml,/tmp/_config_additional.yml
+      echo -e "timezone: Europe/Moscow\nwerfVersion: {{ .Version }}\nwerfVersionNormalized: {{ .VersionNormalized }}" > /tmp/_config_additional.yml
+      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/main/{{ if ne .Version "master"}}{{.VersionNormalized }} --baseurl /{{ .VersionNormalized }}{{ end }} --config /app/docs/_config.yml,/tmp/_config_additional.yml
+      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/ru/{{ if ne .Version "master"}}{{.VersionNormalized }} --baseurl /{{ .VersionNormalized }}{{ end }} --config /app/docs/_config.yml,/app/docs/_config_ru.yml,/tmp/_config_additional.yml
     args:
       executable: /bin/bash
       chdir: /app/docs
@@ -46,7 +47,7 @@ git:
     install: ['Gemfile','Gemfile.lock']
     beforeSetup: '**/*'
 ---
-image: site-{{ .BaseURL }}
+image: site-{{ .VersionNormalized }}
 from: nginx:stable-alpine
 ansible:
   setup:
@@ -66,7 +67,7 @@ ansible:
       dest: /app/ru/robots.txt
 {{- end }}
 import:
-- artifact: asset-{{ .BaseURL }}
+- artifact: asset-{{ .VersionNormalized }}
   add: /app/_site
   to: /app/
   before: setup
