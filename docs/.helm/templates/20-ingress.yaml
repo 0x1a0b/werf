@@ -37,7 +37,7 @@ spec:
 {{- if eq .Version "master" }}
       - path: /
 {{- else }}
-      - path: /{{ .Version }}
+      - path: /{{ .VersionURLNormalized }}
 {{- end }}
         backend:
           serviceName: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
@@ -48,7 +48,7 @@ spec:
 {{- if eq .Version "master" }}
       - path: /
 {{- else }}
-      - path: /{{ .Version }}
+      - path: /{{ .VersionURLNormalized }}
 {{- end }}
         backend:
           serviceName: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
